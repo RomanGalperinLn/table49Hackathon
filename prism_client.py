@@ -69,6 +69,66 @@ def safe_print_json(maybe_json_str):
         print(maybe_json_str)
 
 
+def build_portfolio(investor):
+    """
+    Generates a valid portfolio based on investor context.
+    investor: dict with keys like 'age', 'budget', 'interests'
+    Returns: list of dicts [{"ticker": "AAPL", "quantity": 1}, ...]
+    """
+    budget = investor.get("budget", 5000)
+    interests = investor.get("interests", [])
+    age = investor.get("age", 40)
+
+    # Determine risk (simplified)
+    if age > 65 or budget < 10000:
+        risk = "low"
+    elif age > 45:
+        risk = "medium"
+    else:
+        risk = "high"
+
+    # Map interests to tickers
+    sector_map = {
+        "finance": ["JPM", "BAC"],
+        "real estate": ["PLD", "O"],
+        "energy": ["XOM", "CVX"],
+        "transportation": ["UNP", "FDX"],
+        "tech": ["AAPL", "MSFT"],
+        "trade": ["WMT", "COST"],
+        "gardening": ["WMT", "COST"]
+    }
+
+    # Collect tickers based on interests
+    tickers = []
+    for sector, stocks in sector_map.items():
+        for interest in interests:
+            if sector in interest.lower():
+                tickers.extend(stocks)
+    if not tickers:
+        tickers = ["PG", "KO", "JNJ", "XOM", "UNP"]  # fallback low-risk portfolio
+
+    # Mock prices (replace with live prices later)
+    prices = {"PG": 150, "KO": 65, "JNJ": 160, "XOM": 120, "UNP": 235,
+              "JPM": 210, "BAC": 40, "PLD": 125, "O": 55, "XOM": 120,
+              "CVX": 150, "UNP": 235, "FDX": 275, "AAPL": 230, "MSFT": 430,
+              "WMT": 66, "COST": 750}
+
+    # Allocate budget evenly
+    allocation = budget / len(tickers)
+    portfolio = []
+    used_tickers = set()
+    for t in tickers:
+        if t in used_tickers:
+            continue  # avoid duplicates
+        price = prices.get(t, 100)
+        qty = int(allocation // price)
+        if qty > 0:
+            portfolio.append({"ticker": t, "quantity": qty})
+            used_tickers.add(t)
+
+    return portfolio
+
+
 if __name__ == "__main__":
     logging.info("Fetching team info...")
     ok, info = get_my_current_information()
@@ -82,8 +142,8 @@ if __name__ == "__main__":
     ok, context = get_context()
     if not ok:
         logging.error("Failed to get context: %s", context)
-    else:
         logging.info("Investor context received:")
+    else:
         safe_print_json(context)
 
     # example dry-run portfolio (CHANGE before real submission!)
